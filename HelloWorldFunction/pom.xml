@@ -69,5 +69,6 @@
           </executions>
         </plugin>
       </plugins>
+      <finalName>axisAOS</finalName>
     </build>
 </project>
