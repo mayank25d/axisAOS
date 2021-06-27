@@ -43,4 +43,4 @@ Outputs:
     Value: !GetAtt HelloWorldFunctionRole.Arn
   HelloWorldS3:
     Description: "S3 url for production"
-    Value: arn:aws:s3:::aosbackend
+    Value: s3://aosbackend/866e592a94e2f2019a4ec278c225899c
