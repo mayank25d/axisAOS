@@ -1,6 +1,7 @@
 package helloworld.model;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.*;
+import com.amazonaws.services.dynamodbv2.datamodeling.encryption.DoNotTouch;
 import helloworld.config.CustomGeneratedKey;
 
 import java.util.Map;
@@ -40,6 +41,7 @@ public class AgentData {
 
   @DynamoDBAttribute(attributeName = "distriChannel")
   @DynamoDBIndexHashKey(attributeName = "distriChannel", globalSecondaryIndexName = "distriChannel-joiningDate-index")
+  @DoNotTouch
   private String distriChannel = "undefined";
 
   @DynamoDBAttribute(attributeName = "login")
