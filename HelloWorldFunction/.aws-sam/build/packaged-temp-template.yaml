@@ -5,5 +5,5 @@ Resources:
       Timeout: 300
       MemorySize: 128
       Handler: helloworld.handler.App::handleRequest
-      CodeUri: s3://aosbackend/43badeeb3bd920d10ecd8c06be899490
+      CodeUri: s3://aosbackend/2cc189d70a4c3f09b6b5c08204f6bf82
       Runtime: java8

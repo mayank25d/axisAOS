@@ -3,6 +3,7 @@ package helloworld.handler;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.*;
 import java.util.*;
 
@@ -35,6 +36,8 @@ import helloworld.model.AgentData;
 import helloworld.repo.AgentRepository;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
+
+import javax.mail.MessagingException;
 
 public class App implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
@@ -91,6 +94,22 @@ public class App implements RequestHandler<APIGatewayProxyRequestEvent, APIGatew
                 e.printStackTrace();
                 return buildResponse(500, "AOS: Internal Server Error");
               }
+            }
+        } if(resource.equals("/send-notification")) {
+            if(method.equals("POST")) {
+                String body = input.getBody();
+                try {
+                    String result = makeJsonStringFromObject(objectMapper, repo.sendNotification(body));
+                    return buildResponse(200, result);
+                } catch (MessagingException | UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                    return buildResponse(500, "AOS: Internal Server Error");
+                }
+            }
+        } if(resource.equals("/dashboard-data")) {
+            if(method.equals("GET")) {
+                String result = makeJsonStringFromObject(objectMapper, repo.getDashboardData());
+                return buildResponse(200, result);
             }
         }
         return buildResponse(500, "");

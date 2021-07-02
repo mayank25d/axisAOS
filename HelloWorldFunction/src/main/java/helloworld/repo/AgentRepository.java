@@ -3,38 +3,35 @@ package helloworld.repo;
 import com.amazonaws.encryptionsdk.AwsCrypto;
 import com.amazonaws.encryptionsdk.CommitmentPolicy;
 import com.amazonaws.encryptionsdk.CryptoInputStream;
-import com.amazonaws.encryptionsdk.CryptoResult;
 import com.amazonaws.encryptionsdk.kms.KmsMasterKey;
 import com.amazonaws.encryptionsdk.kms.KmsMasterKeyProvider;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
-import com.amazonaws.services.dynamodbv2.datamodeling.encryption.DynamoDBEncryptor;
-import com.amazonaws.services.dynamodbv2.datamodeling.encryption.providers.DirectKmsMaterialProvider;
+import com.amazonaws.services.dynamodbv2.document.*;
+import com.amazonaws.services.dynamodbv2.document.spec.ScanSpec;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.kms.AWSKMS;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 import com.amazonaws.services.s3.transfer.Upload;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import helloworld.model.AgentData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 
 @Component
 public class AgentRepository {
@@ -43,10 +40,94 @@ public class AgentRepository {
   private DynamoDBMapper mapper;
 
   @Autowired
+  private DynamoDB dynamoDB;
+
+  @Autowired
   private AmazonS3 s3Client;
 
   @Autowired
   private KmsMasterKeyProvider masterKeyProvider;
+
+  public HashMap<String, String> getDashboardData() {
+    Table table = dynamoDB.getTable("AOS_database");
+
+    ScanSpec scanSpec = new ScanSpec().withProjectionExpression("userID, distriChannel");
+
+    HashMap<String, String> dataMap = new HashMap<String, String>();
+    int channelUndefined = 0;
+    int channelF2F = 0;
+    int channelTele = 0;
+    try{
+      ItemCollection<ScanOutcome> items = table.scan(scanSpec);
+      Iterator<Item> iter = items.iterator();
+      while (iter.hasNext()) {
+        Item item = iter.next();
+        if(item.asMap().get("distriChannel").equals("undefined")) {
+          channelUndefined = channelUndefined+1;
+        } if(item.asMap().get("distriChannel").equals("f2f")) {
+          channelF2F = channelF2F+1;
+        } if(item.asMap().get("distriChannel").equals("tele")) {
+          channelTele = channelTele+1;
+        }
+      }
+      dataMap.put("totalCount", String.valueOf(items.getAccumulatedScannedCount()));
+      dataMap.put("totalDocCount", String.valueOf(items.getAccumulatedScannedCount()*5));
+      dataMap.put("totalTele", String.valueOf(channelTele));
+      dataMap.put("totalF2F", String.valueOf(channelF2F));
+      dataMap.put("totalUndefiend", String.valueOf(channelUndefined));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    return dataMap;
+  }
+
+  public String sendNotification(String data) throws MessagingException, UnsupportedEncodingException {
+    String from = "mayank25d@gmail.com";
+    String fromName = "JD Bank";
+    String recipient = "dshivam408@gmail.com";
+    String subject = "Rejected list of agents";
+    String CONFIGSET = "ConfigSet";
+    String smtpUsername = ""; // Your SMTP username, can be created using SES SMTP settings
+    String smtpPass = ""; // Your SMTP password, can be created using SES SMTP settings
+    String host = "email-smtp.us-east-2.amazonaws.com";
+    int port = 587;
+
+    String bodyText = data;
+
+    Properties props = System.getProperties();
+    props.put("mail.transport.protocol", "smtp");
+    props.put("mail.smtp.port", port);
+    props.put("mail.smtp.starttls.enable", "true");
+    props.put("mail.smtp.auth", "true");
+
+    Session session = Session.getDefaultInstance(props);
+
+    MimeMessage msg = new MimeMessage(session);
+    msg.setFrom(new InternetAddress(from,fromName));
+    msg.setRecipient(Message.RecipientType.TO, new InternetAddress(recipient));
+    msg.setSubject(subject);
+    msg.setContent(bodyText,"text/html");
+
+    Transport transport = session.getTransport();
+
+    String response;
+    try {
+      transport.connect(host, smtpUsername, smtpPass);
+      transport.sendMessage(msg, msg.getAllRecipients());
+      response = "Email Sent";
+    }
+    catch (Exception ex) {
+      ex.printStackTrace();
+      response = "The Email was not sent";
+    }
+    finally
+    {
+      transport.close();
+    }
+
+    return response;
+  }
 
   public List<AgentData> getAgentsByUserID(String userID) {
     Map<String, AttributeValue> eav = new HashMap<String, AttributeValue>();

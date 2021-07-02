@@ -47,12 +47,37 @@ public class AgentData {
   @DynamoDBAttribute(attributeName = "login")
   private Map<String, Map<String, String>> login;
 
+  public String getStatus() {
+    return status;
+  }
+
+  public void setStatus(String status) {
+    this.status = status;
+  }
+
+  public String getMessage() {
+    return message;
+  }
+
+  public void setMessage(String message) {
+    this.message = message;
+  }
+
+  @DynamoDBAttribute(attributeName = "status")
+  private String status;
+
+  @DynamoDBAttribute(attributeName = "message")
+  private String message;
+
   public AgentData() { }
 
   public AgentData(String userID, String joiningDate, Map<String, String> personalInfo,
                    Map<String, String> aadhar, Map<String, String> pan, Map<String, String> edu,
                    Map<String, String> training, String licenseNo, String licenseExp,
-                   String insurer, String distriChannel, Map<String, Map<String, String>> login) {
+                   String insurer, String distriChannel, Map<String, Map<String, String>> login,
+                   String status, String message) {
+    this.status = status;
+    this.message = message;
     this.userID = userID;
     this.joiningDate = joiningDate;
     this.personalInfo = personalInfo;

@@ -11,6 +11,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.amazonaws.services.dynamodbv2.datamodeling.encryption.DynamoDBEncryptor;
 import com.amazonaws.services.dynamodbv2.datamodeling.encryption.providers.DirectKmsMaterialProvider;
+import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.kms.AWSKMS;
 import com.amazonaws.services.kms.AWSKMSClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
@@ -23,8 +24,8 @@ public class AOSConfig {
 
   private String cmkARN = "arn:aws:kms:us-east-2:875743156223:key/mrk-f6ef6447e00e401f9d44c55bea3e858b";
   private String keyARN = "arn:aws:kms:us-east-2:875743156223:alias/aos-key";
-  private String accessKey = "AKIA4XZS4C77QQ45AKWV";
-  private String secretKey = "xfW/l787NoQuO+lYtXxF0YzLMREN4PGkq4N6E1xb";
+  private String accessKey = ""; // Place your access key here
+  private String secretKey = ""; // Place your secret key here
   private String region = "us-east-2";
 
   @Bean
@@ -40,6 +41,11 @@ public class AOSConfig {
     return KmsMasterKeyProvider.builder()
             .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey)))
             .buildStrict(keyARN);
+  }
+
+  @Bean
+  public DynamoDB dynamoDB() {
+    return new DynamoDB(client());
   }
 
   @Bean
